@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=1">
+
+<title>ERS Ribbon Demo</title>
+
+<style>
+/********************************/
+/* 1/4 Ribbon defaults and math */
+/********************************/
+[ribbon], /* by default all ribbons and <body> element ribbons */
+[ribbon*=".bd"] {
+    position: fixed; z-index: 999999;
+}
+[ribbon*=".el"] { /* any other container element */
+    position: absolute;
+}
+/*******************/
+/* 2/4 all ribbons */
+/*******************/
+[ribbon] {
+    /* Flexbox layout for easy alignment of the ribbon content */
+    display: flex; justify-content: center; align-items: center;
+
+    /* some default scales, modify at will */
+    --rbn-scale     : 1.1;
+    --rbn-scale-text: 1;
+
+    /* linear math: y=mx+b, some default values for ribbon height, width and font size */
+    --rbn-wm: 0.05   ; --rbn-wb: 10.25rem; /* rem = b div 16 */
+    --rbn-hm: 0.005  ; --rbn-hb: 1.4rem;
+    --rbn-fm: 0.00625; --rbn-fb: 0.5rem;
+
+    /* x is always 100vmin, viewport minimum dependent, could be hardcoded below */
+    --rbn-x: 100vmin;
+
+    /* trigonometry helpers, by lack of CSS math functions */
+    --sqrt2: 1.4142135;
+    --cos2 : 0.1464466; /* coded for 45degree rotation */
+    --degP :  45deg;    /* positive angle */
+    --degN : -45deg;    /* negative */
+
+    /* the responsive math: y=mx+b, unscaled */
+    --rbn-w: calc(var(--rbn-wm) * var(--rbn-x) + var(--rbn-wb)); /* ribbon width     */
+    --rbn-h: calc(var(--rbn-hm) * var(--rbn-x) + var(--rbn-hb)); /* ribbon height    */
+    --rbn-f: calc(var(--rbn-fm) * var(--rbn-x) + var(--rbn-fb)); /* ribbon font-size */
+
+    /* assign and scale results to CSS attributes */
+    width    : calc(var(--rbn-w)  * var(--rbn-scale));
+    height   : calc(var(--rbn-h)  * var(--rbn-scale));
+    font-size: calc(var(--rbn-f)  * var(--rbn-scale-text));
+
+    /* calculate vertical movement and scale */
+    --rbn-ud: calc(var(--rbn-h) / var(--sqrt2) * -1 * var(--rbn-scale));
+
+    /* calculate horizontal movement and scale */
+    --rbn-lr: calc( (var(--rbn-h) / var(--sqrt2) + (2 * var(--rbn-w) * var(--cos2))) * -1 * var(--rbn-scale) );
+}
+
+/* rotation */
+[ribbon],
+[ribbon*=".tr"], [ribbon*=".bl"] { transform: rotate(var(--degP)) }
+[ribbon*=".tl"], [ribbon*=".br"] { transform: rotate(var(--degN)) }
+
+/* vertical movement */
+[ribbon],
+[ribbon*=".t"] { top   : var(--rbn-ud); bottom: auto }
+[ribbon*=".b"] { bottom: var(--rbn-ud); top   : auto }
+
+/* horizontal movement */
+[ribbon],
+[ribbon*=".tr"] { transform-origin: top left    ; right: var(--rbn-lr); left : auto } /* top/right    */
+[ribbon*=".tl"] { transform-origin: top right   ; left : var(--rbn-lr); right: auto } /* top/left     */
+[ribbon*=".br"] { transform-origin: bottom left ; right: var(--rbn-lr); left : auto } /* bottom/right */
+[ribbon*=".bl"] { transform-origin: bottom right; left : var(--rbn-lr); right: auto } /* bottom/left  */
+
+/******************************/
+/* 3/4 Ribbon default theming */
+/******************************/
+[ribbon] {
+    --alpha-bg: 0.80; /* opacity */
+    --alpha-fg: 0.85;
+
+    /* some default settings */
+    background-color: hsla(0,0%,  0%,var(--alpha-bg)); /* black */
+               color: hsla(0,0%,100%,var(--alpha-fg)); /* white */
+
+    box-shadow: 0px 3px 5px -1px rgba(0,0,0,.4)
+}
+[ribbon]:hover {
+    --alpha-bg: 0.95;
+    --alpha-fg: 1
+}
+
+/********************************/
+/* 4/4 Ribbon default text line */
+/********************************/
+[ribbon] a {
+    width: 100%;
+
+    font-weight: bold; color: inherit; white-space: nowrap;
+    text-decoration: none; text-align: center;
+
+    border-width: 2px 0;                   /* top/bottom only */
+    border-style: dotted;                  /* any style will do */
+    border-color: transparent transparent; /* make the 1st 'inherit' to show */
+}
+/* [OPTIONAL] How to use a custom property for text */
+[ribbon] a:before { content: attr(data-ribbon) }
+
+/******************/
+/* 5 demo ribbons */
+/******************/
+
+/* colors: https://coolors.co/f2ee7a-7c6582-6252aa-f1ffc9-cdc5bb */
+
+/* y=mx+b */
+/* ribbon 1: width: (320, 52)(1920,132) */
+/* ribbon 2:        (320,116)(1920,196) */
+/* ribbon 3:        (320,180)(1920,260) */
+/* ribbon 4:        (320,244)(1920,324) */
+/* ribbon 5:        (320,308)(1920,388) */
+
+[ribbon*="1"] { --rbn-wb:  2.25rem; background-color: hsla(76,100%,89%,var(--alpha-bg)); color: black }
+[ribbon*="2"] { --rbn-wb:  6.25rem; background-color: hsla(58, 82%,71%,var(--alpha-bg)); color: black }
+[ribbon*="3"] { --rbn-wb: 10.25rem; background-color: hsla(250,35%,35%,var(--alpha-bg)) }              
+[ribbon*="4"] { --rbn-wb: 14.25rem; background-color: hsla(250,35%,25%,var(--alpha-bg)) }              
+[ribbon*="5"] { --rbn-wb: 18.25rem; background-color: hsla(250,35%,15%,var(--alpha-bg)) }              
+
+/*********************/
+/* demo webpage only */
+/*********************/
+html,body           { box-sizing: border-box }
+::before,:after, *  { box-sizing: inherit }
+
+/*  responsive padding (y=mx+b)
+
+    top/bottom padding: p1(320,16) p2(1920, 72) => 0.035x + 4.8  => vary from 16 to  72px
+    left/right padding: p1(320, 8) p2(1920,320) => 0.195x - 54.4 => vary from  8 to 320px
+*/
+body {
+    padding: calc(3.5vh + 4.8px) calc(19.5vw - 54.4px); /* responsive outside spacing */
+    background-color: hsla(33,15%,77%,.7);
+}
+
+.container {
+    position: relative; /* required for absolute positioning of ribbons */
+    overflow: hidden;   /* clips the ribbon corners by default */
+    height  : 12rem;
+    padding :  1rem;
+
+    margin-bottom: calc(3.5vh + 4.8px); /* same a body t/b padding */
+
+    color: White;
+    background-color: hsl(288,13%,45%);
+
+    opacity: 0.85;
+}
+.container:last-child     { margin-bottom: 0 } /* keeps body spacing consistent */
+
+.container[no-clip]       { overflow: visible } /* show the ribbon corners */ 
+
+.container [ribbon]       { z-index: 999 }      /* stay under body ribbons */
+.container[tape] [ribbon] { --alpha-bg: 0.2; border: 1px solid grey }
+
+
+/* Some hover eye-candy, completely pointless, but fun nonetheless */
+.container {
+    cursor: pointer;
+    
+    /* GMC elevation 1dp */
+    box-shadow: 0px 2px 1px -1px rgba(0,0,0,.20),
+                0px 1px 1px  0px rgba(0,0,0,.14),
+                0px 1px 3px  0px rgba(0,0,0,.12);
+}
+.container:hover {
+    opacity: 1;
+    transform: scale(1.01);
+    /* GMC elevation 3dp */
+    box-shadow: 0px 3px 3px -2px rgba(0,0,0,.20),
+                0px 3px 4px  0px rgba(0,0,0,.14),
+                0px 1px 8px  0px rgba(0,0,0,.12);
+}
+.container:active:not(:focus) { transform: scale(1) }
+</style>
+
+</head>
+
+<body>
+<div ribbon="3"><a rel="noopener" target="_blank" href="https://github.com/renevanderlende/ers-css-fork-ribbon" data-ribbon="Ribbon at Github"></a></div>
+<div ribbon="4"><a rel="noopener" target="_blank" href="https://github.com/renevanderlende/renevanderlende.github.io/tree/master/js" data-ribbon="LinearToCalc Tool 1.1"></a></div>
+<div ribbon="5"><a rel="noopener" target="_blank" href="https://github.com/renevanderlende/ers-css-lec" data-ribbon="LEC at Github"></a></div>
+
+<div class="container">
+    <div ribbon="1.tl.el"><a href="javascript:void(0)" data-ribbon="R1"></a></div>
+    <div ribbon="2.tl.el"><a href="javascript:void(0)" data-ribbon="R2"></a></div>
+    <div ribbon="1.br.el"><a href="javascript:void(0)" data-ribbon="R1"></a></div>
+    <div ribbon="2.br.el"><a href="javascript:void(0)" data-ribbon="R2"></a></div>
+</div>
+<div class="container">
+    <div ribbon="1.tr.el"><a href="javascript:void(0)" data-ribbon="R1"></a></div>
+    <div ribbon="2.tr.el"><a href="javascript:void(0)" data-ribbon="R2"></a></div>
+    <div ribbon="1.bl.el"><a href="javascript:void(0)" data-ribbon="R1"></a></div>
+    <div ribbon="2.bl.el"><a href="javascript:void(0)" data-ribbon="R2"></a></div>
+</div>
+<div class="container" no-clip>
+    <div ribbon="1.tl.el"><a href="javascript:void(0)" data-ribbon="R1"></a></div>
+    <div ribbon="2.br.el"><a href="javascript:void(0)" data-ribbon="R2"></a></div>
+</div>
+<div class="container" no-clip tape>
+    <div ribbon="1.tl.el"><a href="javascript:void(0)" data-ribbon="R1"></a></div>
+    <div ribbon="2.br.el"><a href="javascript:void(0)" data-ribbon="R2"></a></div>
+</div>
+</body>
+</html>
