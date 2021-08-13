@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=1">
+
+<title>ERS Ribbon Commented</title>
+
+<style>
+/********************************/
+/* 1/4 Ribbon defaults and math */
+/********************************/
+[ribbon], /* by default all ribbons and <body> element ribbons */
+[ribbon*=".bd"] {
+    position: fixed; z-index: 999999;
+    /* z-index maximum value is usually 2^32 - 1: 32bits number -1 for negative sign */
+}
+[ribbon*=".el"] { /* any other container element */
+    position: absolute;
+}
+/*******************/
+/* 2/4 all ribbons */
+/*******************/
+[ribbon] {
+    /* Flexbox layout for easy alignment of the ribbon content */
+    display: flex; justify-content: center; align-items: center;
+
+    /*
+        - To get the ribbon nicely tugged in the corner, the ribbon lower corners have to
+          move to the top and side of its parent element, which means the 'top' and 'left'
+          (or 'right') atributes of the ribbon need to be negative.
+
+        - As the ribbon is a rectangle and gets rotated 45 degrees, its left and right side
+          will overflow its parent container.
+          For slanted ribbon sides, the parent container will need `overflow: hidden` set.
+
+        - [OPTIONAL] the ribbon and text can be scaled using their respective scale variable
+          a font-size to ribbon-height ratio of 1:1.1 looks nice. Any value will do, however.
+
+        Responsive ribbon and font sizes
+        --------------------------------
+        linear equation 'y=mx+b' is used to calculate the ribbon responsive width/height
+        and font sizes. The values below are just chosen defaults and can be changed as
+        required.
+          
+        the math:
+
+        y = mx + b using points p1(x1,y1), p2(x2,y2)
+        where m = (y2-y1)/(x2-x1)
+              b = y1 - m * x1
+              x = 100vmin 
+
+        defaults sizes used point(viewport minimum, required size):
+        - width  p1(320,180) p2(1920,260)
+        - height p1(320, 24) p2(1920, 32)
+        - font   p1(320, 10) p2(1280, 16)
+
+        Moving the ribbon to either corner
+        ----------------------------------
+        After 45deg rotation (pivot around top/left or top/right corner of the ribbon)
+        the ribbon's height becomes 'the diagonal of a square' (= hypotenuse of a traingle)
+
+        - Vertical movement        
+          To obtain the value to move up we need to get the side of a square from its diagonal
+          which is: hypotenuse / sqrt(2).
+        
+          As we earlier established that the hypotenuse is the height of the ribbon and the
+          height is calculated with y=mx+b, we need to substitute 'hypotenuse' with 'mx+b' 
+        
+          vertical movement = (hm * x + hb) / sqrt(2) => using the height values of m and b
+
+        - Horizontal movement
+          We already have the value to move outside the parent container, but because we
+          pivoted 45degrees around a corner of the ribbon (either left or right), we also
+          need to take the width of the ribbon into acount to get the proper value.
+
+          As we know the degrees of rotation to be 45 and the width of the ribbon (which is
+          also calculated with y=mx+b), we can combine linear and trigonometric math to find
+          the vaule we need.
+          
+          result = vertical movement + 2r.cos(180-angle)^2
+
+          in our case ribbon width = r (radius) = (wm * x + wb)
+
+          horizontal movement = (vertical movement + ( 2 * (wm * x + wb) * cos(180 - 45)^2 )
+
+          As in CSS sqrt, cos and ^2 are not available in calc() some hardcoded values are needed:
+
+          - sqrt(2)       = 1.4142135
+          - cos(180-45)^2 = 0.1464466 (hence only 45 degree rotated ribbons for now)
+
+        Ribbon scaling
+        --------------
+        While the ribbon can be scaled by changing its width and/or height, it seemed only
+        logical introduce a scale factor illiminating the need to recalculate y=mx+b values
+        for each new ribbon.
+        To be consistent, the ribbon text can be scale separately.
+
+        Final remarks
+        -------------
+        All the math was discussed and verified with 'Bob' in the 'MathIsFun Forum'
+        http://www.mathisfunforum.com/viewtopic.php?id=25620)
+
+        This works like a charm, so cool! (Thanks a bunch, Bob)
+    */
+
+    /* some default scales, modify at will */
+    --rbn-scale     : 1.1;
+    --rbn-scale-text: 1;
+
+    /* linear math: y=mx+b, some default values for ribbon height, width and font size */
+    --rbn-wm: 0.05   ; --rbn-wb: 10.25rem; /* rem = b div 16 */
+    --rbn-hm: 0.005  ; --rbn-hb: 1.4rem;
+    --rbn-fm: 0.00625; --rbn-fb: 0.5rem;
+
+    /* x is always 100vmin, viewport minimum dependent, could be hardcoded below */
+    --rbn-x: 100vmin;
+
+    /* trigonometry helpers, by lack of CSS math functions */
+    --sqrt2: 1.4142135;
+    --cos2 : 0.1464466; /* coded for 45degree rotation */
+    --degP :  45deg;    /* positive angle */
+    --degN : -45deg;    /* negative */
+
+    /*
+       The below calculation are split over several variables for better
+       readability and maintenance, combine them for improved performance.
+    */
+
+    /* the responsive math: y=mx+b, unscaled */
+    --rbn-w: calc(var(--rbn-wm) * var(--rbn-x) + var(--rbn-wb)); /* ribbon width     */
+    --rbn-h: calc(var(--rbn-hm) * var(--rbn-x) + var(--rbn-hb)); /* ribbon height    */
+    --rbn-f: calc(var(--rbn-fm) * var(--rbn-x) + var(--rbn-fb)); /* ribbon font-size */
+
+    /* assign and scale results to CSS attributes */
+    width    : calc(var(--rbn-w)  * var(--rbn-scale));
+    height   : calc(var(--rbn-h)  * var(--rbn-scale));
+    font-size: calc(var(--rbn-f)  * var(--rbn-scale-text));
+
+    /* calculate vertical movement and scale */
+    --rbn-ud: calc(var(--rbn-h) / var(--sqrt2) * -1 * var(--rbn-scale));
+
+    /* calculate horizontal movement and scale */
+    --rbn-lr: calc( (var(--rbn-h) / var(--sqrt2) + (2 * var(--rbn-w) * var(--cos2))) * -1 * var(--rbn-scale) );
+}
+
+/* rotation */
+[ribbon],
+[ribbon*=".tr"], [ribbon*=".bl"] { transform: rotate(var(--degP)) }
+[ribbon*=".tl"], [ribbon*=".br"] { transform: rotate(var(--degN)) }
+
+/* vertical movement */
+[ribbon],
+[ribbon*=".t"] { top   : var(--rbn-ud); bottom: auto }
+[ribbon*=".b"] { bottom: var(--rbn-ud); top   : auto }
+
+/* horizontal movement */
+[ribbon],
+[ribbon*=".tr"] { transform-origin: top left    ; right: var(--rbn-lr); left : auto } /* top/right    */
+[ribbon*=".tl"] { transform-origin: top right   ; left : var(--rbn-lr); right: auto } /* top/left     */
+[ribbon*=".br"] { transform-origin: bottom left ; right: var(--rbn-lr); left : auto } /* bottom/right */
+[ribbon*=".bl"] { transform-origin: bottom right; left : var(--rbn-lr); right: auto } /* bottom/left  */
+
+/******************************/
+/* 3/4 Ribbon default theming */
+/******************************/
+[ribbon] {
+    --alpha-bg: 0.80; /* opacity */
+    --alpha-fg: 0.85;
+
+    /* some default settings */
+    background-color: hsla(0,0%,  0%,var(--alpha-bg)); /* black */
+               color: hsla(0,0%,100%,var(--alpha-fg)); /* white */
+
+    box-shadow: 0px 3px 5px -1px rgba(0,0,0,.4)
+}
+[ribbon]:hover {
+    --alpha-bg: 0.95;
+    --alpha-fg: 1
+}
+
+/********************************/
+/* 4/4 Ribbon default text line */
+/********************************/
+[ribbon] a {
+    width: 100%;
+
+    font-weight: bold; color: inherit; white-space: nowrap;
+    text-decoration: none; text-align: center;
+
+    border-width: 2px 0;                   /* top/bottom only */
+    border-style: dotted;                  /* any style will do */
+    border-color: transparent transparent; /* make the 1st 'inherit' to show */
+}
+/* [OPTIONAL] How to use a custom property for text */
+[ribbon] a:before { content: attr(data-ribbon) }
+</style>
+
+</head>
+
+<body>
+    <span ribbon=".tr"><a rel="noopener" target="_blank" href="https://github.com/renevanderlende/ers-css-fork-ribbon" data-ribbon="Fork me on Github"></a></span>
+    <span ribbon=".br"><a rel="noopener" target="_blank" href="https://github.com/renevanderlende/ers-css-fork-ribbon" data-ribbon="Fork me on Github"></a></span>
+    <span ribbon=".tl"><a rel="noopener" target="_blank" href="https://github.com/renevanderlende/ers-css-fork-ribbon" data-ribbon="Fork me on Github"></a></span>
+    <span ribbon=".bl"><a rel="noopener" target="_blank" href="https://github.com/renevanderlende/ers-css-fork-ribbon" data-ribbon="Fork me on Github"></a></span>
+</body>
+</html>
